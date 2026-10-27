@@ -20,9 +20,8 @@ const SITE = {
   phone: '(480) 673-8311',
   tel: '+14806738311',
   email: 'service@kappa-air.com',
-  address: ['3101 W Thomas Rd #110', 'Phoenix, AZ 85205'],
+  address: ['3101 W Thomas Rd #108', 'Phoenix, AZ 85017'],
   facebook: 'https://www.facebook.com/KappaAirLLC',
-  maps: 'https://www.google.com/maps/place//data=!4m2!3m1!1s0x872ba5496f69e41f:0x4586339bee48bd2?source=g.page.share',
   cities: ['Mesa', 'Apache Junction', 'Buckeye', 'Chandler', 'Gilbert', 'Glendale', 'Gold Canyon',
     'Peoria', 'Phoenix', 'Queen Creek', 'San Tan Valley', 'Scottsdale', 'Tempe'],
 };
@@ -220,13 +219,12 @@ const fill = (html, slug) => html
   .replace(/\{\{TEL\}\}/g, SITE.tel)
   .replace(/\{\{EMAIL\}\}/g, SITE.email)
   .replace(/\{\{ADDRESS\}\}/g, SITE.address.join('<br>'))
-  .replace(/\{\{MAPS\}\}/g, SITE.maps)
   .replace(/\{\{FACEBOOK\}\}/g, SITE.facebook);
 
 const BUSINESS_LD = {
   '@context': 'https://schema.org', '@type': 'HVACBusiness', name: SITE.name, url: SITE.url + '/',
   telephone: '+1-480-673-8311', email: SITE.email, image: SITE.url + '/images/kappa-air-logo.png',
-  address: { '@type': 'PostalAddress', streetAddress: SITE.address[0], addressLocality: 'Phoenix', addressRegion: 'AZ', postalCode: '85205', addressCountry: 'US' },
+  address: { '@type': 'PostalAddress', streetAddress: SITE.address[0], addressLocality: 'Phoenix', addressRegion: 'AZ', postalCode: '85017', addressCountry: 'US' },
   areaServed: SITE.cities.map((c) => ({ '@type': 'City', name: c + ', AZ' })),
   openingHours: 'Mo-Fr 07:00-17:00', sameAs: [SITE.facebook],
 };
@@ -287,7 +285,7 @@ ${body}
       <ul>
         <li><a href="tel:${SITE.tel}">${SITE.phone}</a></li>
         <li><a href="mailto:${SITE.email}">${SITE.email}</a></li>
-        <li><a href="${SITE.maps}">${SITE.address.join(', ')}</a></li>
+        <li>${SITE.address.join(', ')}</li>
         <li><a href="${SITE.facebook}">Facebook</a></li>
       </ul>
     </div>
