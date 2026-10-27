@@ -1,0 +1,341 @@
+#!/usr/bin/env node
+// Kappa-Air, LLC — static site generator (zero dependencies).
+// Renders content/pages/*.html into docs/ with the shared header, nav, and footer.
+//
+//   content/pages/*.html  one file per page; front matter between --- lines (key: value)
+//   static/               copied as-is (logo, favicon)
+//   site.config.json      domain: "" while previewing on tooshel.github.io/kappa-air/,
+//                         "www.kappa-air.com" once DNS points at GitHub Pages (see README)
+//
+// Run: node tools/build.js   then commit and push; GitHub Pages serves docs/.
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.join(__dirname, '..');
+const OUT = path.join(ROOT, 'docs');
+const CONFIG = JSON.parse(fs.readFileSync(path.join(ROOT, 'site.config.json'), 'utf8'));
+const SITE = {
+  name: 'Kappa-Air, LLC',
+  url: 'https://www.kappa-air.com',
+  phone: '(480) 673-8311',
+  tel: '+14806738311',
+  email: 'service@kappa-air.com',
+  address: ['3101 W Thomas Rd #110', 'Phoenix, AZ 85205'],
+  facebook: 'https://www.facebook.com/KappaAirLLC',
+  maps: 'https://www.google.com/maps/place//data=!4m2!3m1!1s0x872ba5496f69e41f:0x4586339bee48bd2?source=g.page.share',
+  cities: ['Mesa', 'Apache Junction', 'Buckeye', 'Chandler', 'Gilbert', 'Glendale', 'Gold Canyon',
+    'Peoria', 'Phoenix', 'Queen Creek', 'San Tan Valley', 'Scottsdale', 'Tempe'],
+};
+// With no custom domain yet, the site lives at tooshel.github.io/kappa-air/, so root links get that prefix.
+const BASE = CONFIG.domain ? '/' : CONFIG.previewBase;
+
+const NAV = [
+  ['home-warranty', 'Home Warranty', '/home-warranty/'],
+  ['ac-repair', 'AC Repair', '/ac-repair/'],
+  ['ac-installation', 'AC Replacement', '/ac-installation/'],
+  ['maintenance', 'Maintenance', '/air-conditioning-and-heating-maintenance/'],
+  ['heating-repair', 'Heating Repair', '/heating-repair/'],
+  ['indoor-air-quality', 'Air Quality', '/indoor-air-quality/'],
+  ['service-area', 'Service Area', '/service-area/'],
+  ['contact-us', 'Contact', '/contact-us/'],
+];
+
+// ---------- content ----------
+function load(file) {
+  const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (!m) throw new Error('missing front matter: ' + file);
+  const meta = {};
+  for (const line of m[1].split('\n')) {
+    const kv = line.match(/^(\w+):\s*(.*)$/);
+    if (kv) meta[kv[1]] = kv[2].trim();
+  }
+  return { ...meta, body: m[2] };
+}
+const pages = fs.readdirSync(path.join(ROOT, 'content/pages')).filter((f) => f.endsWith('.html'))
+  .map((f) => ({ slug: f.replace(/\.html$/, ''), ...load(path.join(ROOT, 'content/pages', f)) }));
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// ---------- styles ----------
+const STYLE = `
+:root{--navy:#17386e;--navy-deep:#0f2a55;--blue:#1a64a3;--sky:#eef5fb;--sky-line:#d3e3f2;--flame:#c8410f;--flame-hot:#f05020;
+  --amber:#f39a2b;--ink:#1d2a3a;--soft:#4f5f72;--line:#dde6ef;color-scheme:light}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+[id]{scroll-margin-top:110px}
+body{margin:0;font:17px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff}
+img{max-width:100%;height:auto}
+a{color:var(--blue);text-underline-offset:.18em}
+a:hover{color:var(--flame)}
+:focus-visible{outline:3px solid var(--flame-hot);outline-offset:2px}
+::selection{background:var(--navy);color:#fff}
+h1,h2,h3{color:var(--navy);line-height:1.2;text-wrap:balance}
+h2{font-size:clamp(1.4rem,2.6vw,1.8rem);margin:0 0 1rem;letter-spacing:-.01em}
+h3{font-size:1.12rem;margin:1.6rem 0 .45rem}
+p,li{text-wrap:pretty}
+.skip{position:absolute;left:-9999px}.skip:focus{left:8px;top:8px;z-index:99;background:#fff;padding:8px 12px}
+
+/* header */
+.site-head{position:sticky;top:0;z-index:20;background:#fff;box-shadow:0 1px 0 var(--line),0 8px 20px -18px rgba(15,42,85,.6)}
+.strip{background:var(--navy);color:#dce7f5;font-size:.9rem}
+.strip .in{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 18px;padding:6px clamp(16px,4vw,40px);max-width:1180px;margin:0 auto}
+.strip a{color:#fff;text-decoration:none}.strip a:hover{color:#ffd2bd;text-decoration:underline}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px 24px;padding:10px clamp(16px,4vw,40px);max-width:1180px;margin:0 auto}
+.logo img{display:block;width:150px;height:auto}
+.bar .call{background:var(--flame);color:#fff;text-decoration:none;font-weight:800;padding:11px 20px;border-radius:8px;white-space:nowrap;
+  box-shadow:0 6px 14px -8px rgba(200,65,15,.9);transition:background .15s}
+.bar .call:hover{background:#a8360c;color:#fff}
+nav.main{border-top:1px solid var(--line)}
+nav.main .in{display:flex;flex-wrap:wrap;gap:0 22px;padding:0 clamp(16px,4vw,40px);max-width:1180px;margin:0 auto}
+nav.main a{color:var(--navy);text-decoration:none;font-weight:650;font-size:.95rem;padding:11px 0;border-bottom:3px solid transparent}
+nav.main a:hover{color:var(--flame)}
+nav.main a[aria-current]{border-bottom-color:var(--flame-hot)}
+
+/* bands */
+section{padding:clamp(36px,6vw,64px) clamp(16px,4vw,40px)}
+.measure{max-width:1080px;margin:0 auto}
+.hero{background:linear-gradient(160deg,var(--navy-deep) 0%,var(--navy) 55%,#1d5592 100%);color:#fff;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-120px;top:-140px;width:460px;height:460px;border-radius:50%;
+  background:radial-gradient(circle,rgba(240,80,32,.38),rgba(240,80,32,0) 65%);pointer-events:none}
+.hero .measure{position:relative;z-index:1}
+.hero h1{color:#fff;font-size:clamp(2rem,4.6vw,3.2rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 1rem;max-width:20ch}
+.hero h1 em{font-style:normal;color:#ffb48f}
+.hero .lead{font-size:1.15rem;color:#dfe9f6;max-width:58ch;margin:0 0 1.6rem}
+.hero .fine{color:#c4d5ea;font-size:.95rem;margin:1.2rem 0 0}
+.hero .fine a{color:#fff}
+.page-head{background:var(--sky);border-bottom:1px solid var(--sky-line);padding:clamp(30px,5vw,52px) clamp(16px,4vw,40px)}
+.page-head h1{font-size:clamp(1.8rem,3.6vw,2.6rem);margin:0 0 .5rem;letter-spacing:-.015em;max-width:26ch}
+.page-head .lead{font-size:1.1rem;color:var(--soft);margin:0;max-width:62ch}
+.tint{background:var(--sky);border-block:1px solid var(--sky-line)}
+.navy{background:var(--navy);color:#dfe9f6}
+.navy h2,.navy h3{color:#fff}
+.navy a{color:#fff}
+
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{display:inline-block;text-decoration:none;font-weight:750;border-radius:8px;padding:14px 24px;line-height:1.2;transition:background .15s,transform .1s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--flame);color:#fff;font-size:1.06rem}
+.btn-primary:hover{background:#a8360c;color:#fff}
+.btn-ghost{color:var(--blue);border:2px solid currentColor}
+.btn-ghost:hover{color:var(--flame)}
+.hero .btn-ghost,.navy .btn-ghost{color:#fff}
+.hero .btn-ghost:hover,.navy .btn-ghost:hover{color:#ffd2bd}
+
+/* content */
+.prose{max-width:70ch}
+.prose h2{margin-top:2.4rem}.prose h2:first-child{margin-top:0}
+.prose ul{padding-left:1.25rem}.prose li{margin:.35rem 0}
+.two-col{display:grid;grid-template-columns:1fr minmax(240px,320px);gap:clamp(24px,4vw,52px);align-items:start}
+.side-card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--flame-hot);border-radius:12px;padding:20px;position:sticky;top:130px;
+  box-shadow:0 12px 28px -22px rgba(15,42,85,.55)}
+.side-card h3{margin:0 0 .4rem}
+.side-card p{margin:0 0 .8rem;color:var(--soft);font-size:.95rem}
+.side-card .btn{display:block;text-align:center;margin-top:.5rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.tile{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;text-decoration:none;color:var(--ink);
+  transition:border-color .15s,transform .15s}
+a.tile:hover{border-color:var(--blue);transform:translateY(-2px);color:var(--ink)}
+.tile svg{width:34px;height:34px;stroke:var(--flame-hot);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile h3{margin:.5rem 0 .25rem}
+.tile p{margin:0;color:var(--soft);font-size:.95rem}
+.steps{list-style:none;padding:0;margin:0;counter-reset:s;display:grid;gap:14px}
+.steps li{counter-increment:s;position:relative;padding:16px 18px 16px 64px;background:#fff;border:1px solid var(--line);border-radius:12px;margin:0}
+.steps li::before{content:counter(s);position:absolute;left:16px;top:15px;width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;
+  font-weight:800;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.steps strong{display:block;color:var(--navy);font-size:1.05rem;margin-bottom:.15rem}
+.checks{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.checks li{padding-left:30px;position:relative;margin:0}
+.checks li::before{content:"";position:absolute;left:2px;top:.45em;width:16px;height:9px;border-left:3px solid var(--flame-hot);border-bottom:3px solid var(--flame-hot);transform:rotate(-45deg)}
+.navy .checks li::before{border-color:#ffb48f}
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(24px,4vw,56px);align-items:start}
+.quote{background:var(--navy);color:#fff;border-radius:14px;padding:26px}
+.quote p{font-size:1.25rem;line-height:1.45;font-weight:600;margin:0 0 .7rem}
+.quote strong{color:#ffb48f}
+.quote .who{font-size:.92rem;font-weight:400;color:#c4d5ea;margin:0}
+.cities{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0}
+.cities li{background:#fff;border:1px solid var(--sky-line);border-radius:999px;padding:6px 14px;font-size:.95rem;margin:0}
+.contact-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+.contact-cols h3{margin:0 0 .4rem}
+.contact-cols ul{list-style:none;margin:0;padding:0;color:var(--soft)}
+.contact-cols li{padding:2px 0}
+.bignum{font-size:clamp(1.5rem,3vw,2rem);font-weight:800;margin:0}
+.bignum a{color:var(--flame);text-decoration:none}
+.hours{border-collapse:collapse;font-variant-numeric:tabular-nums}
+.hours td{padding:3px 18px 3px 0;color:var(--soft)}
+.hours td:first-child{color:var(--ink);font-weight:600}
+.note{background:var(--sky);border:1px solid var(--sky-line);border-radius:12px;padding:16px 18px;margin:1.4rem 0}
+.note>:first-child{margin-top:0}.note>:last-child{margin-bottom:0}
+.cta-band{background:var(--navy);color:#dfe9f6;text-align:center}
+.cta-band h2{color:#fff}
+.cta-band p{max-width:56ch;margin:0 auto 1.4rem}
+.cta-band .cta-row{justify-content:center}
+
+footer.site{background:var(--navy-deep);color:#b9c9de;font-size:.92rem;padding:36px clamp(16px,4vw,40px) 28px}
+footer.site .cols{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px}
+footer.site h3{color:#fff;font-size:.95rem;letter-spacing:.04em;margin:0 0 .5rem}
+footer.site ul{list-style:none;margin:0;padding:0}
+footer.site li{padding:2px 0}
+footer.site a{color:#e7eef8;text-decoration:none;border-bottom:1px solid #3d5b85}
+footer.site a:hover{border-bottom-color:#ffb48f}
+footer.site .base{max-width:1080px;margin:24px auto 0;padding-top:16px;border-top:1px solid #2a4570}
+
+@media (max-width:820px){
+  .two-col,.split{grid-template-columns:1fr}
+  .side-card{position:static}
+  .site-head{position:static}
+  .logo img{width:110px}
+  .strip .tag{display:none}
+  nav.main .in{gap:0 16px}
+  nav.main a{padding:8px 0}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+`;
+
+// ---------- shared pieces content files can use via {{TOKENS}} ----------
+const HOURS = `<table class="hours"><tbody>${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+  .map((d) => `<tr><td>${d}</td><td>7:00 AM – 5:00 PM</td></tr>`).join('')}</tbody></table>`;
+const CITIES = `<ul class="cities">${SITE.cities.map((c) => `<li>${c}</li>`).join('')}</ul>`;
+const CTA_BAND = `<section class="cta-band">
+  <div class="measure">
+    <h2>Warranty company sent you our way?</h2>
+    <p>Call or text and we'll get your service visit on the calendar. Have your claim or work order number handy if you have it.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="tel:${SITE.tel}">Call ${SITE.phone}</a>
+      <a class="btn btn-ghost" href="mailto:${SITE.email}">Email us</a>
+    </div>
+  </div>
+</section>`;
+const SIDE_CARD = (slug) => `<aside class="side-card">
+  <h3>Have a home warranty?</h3>
+  <p>If your warranty company assigned us to your claim, call or text and we'll schedule your visit.</p>
+  <a class="btn btn-primary" href="tel:${SITE.tel}">Call ${SITE.phone}</a>
+  ${slug === 'home-warranty' ? `<a class="btn btn-ghost" href="mailto:${SITE.email}">Email us</a>` : '<a class="btn btn-ghost" href="/home-warranty/">How warranty service works</a>'}
+</aside>`;
+const fill = (html, slug) => html
+  .replace(/\{\{CTA_BAND\}\}/g, CTA_BAND)
+  .replace(/\{\{SIDE_CARD\}\}/g, SIDE_CARD(slug))
+  .replace(/\{\{CITIES\}\}/g, CITIES)
+  .replace(/\{\{HOURS\}\}/g, HOURS)
+  .replace(/\{\{PHONE\}\}/g, SITE.phone)
+  .replace(/\{\{TEL\}\}/g, SITE.tel)
+  .replace(/\{\{EMAIL\}\}/g, SITE.email)
+  .replace(/\{\{ADDRESS\}\}/g, SITE.address.join('<br>'))
+  .replace(/\{\{MAPS\}\}/g, SITE.maps)
+  .replace(/\{\{FACEBOOK\}\}/g, SITE.facebook);
+
+const BUSINESS_LD = {
+  '@context': 'https://schema.org', '@type': 'HVACBusiness', name: SITE.name, url: SITE.url + '/',
+  telephone: '+1-480-673-8311', email: SITE.email, image: SITE.url + '/images/kappa-air-logo.png',
+  address: { '@type': 'PostalAddress', streetAddress: SITE.address[0], addressLocality: 'Phoenix', addressRegion: 'AZ', postalCode: '85205', addressCountry: 'US' },
+  areaServed: SITE.cities.map((c) => ({ '@type': 'City', name: c + ', AZ' })),
+  openingHours: 'Mo-Fr 07:00-17:00', sameAs: [SITE.facebook],
+};
+
+function layout({ title, description, pathname, nav, body }) {
+  const navHtml = NAV.map(([key, label, href]) => `<a href="${href}"${key === nav ? ' aria-current="page"' : ''}>${label}</a>`).join('');
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(description)}">
+<link rel="canonical" href="${SITE.url}${pathname}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${esc(SITE.name)}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
+<meta property="og:url" content="${SITE.url}${pathname}">
+<meta property="og:image" content="${SITE.url}/images/kappa-air-logo.png">
+<link rel="icon" href="/favicon.png" type="image/png">
+${CONFIG.domain ? '' : '<meta name="robots" content="noindex">'}
+<style>${STYLE}</style>
+<script type="application/ld+json">${JSON.stringify(BUSINESS_LD)}</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="strip"><div class="in">
+    <span class="tag">Home warranty HVAC service across Mesa and the Valley</span>
+    <span><a href="mailto:${SITE.email}">${SITE.email}</a></span>
+  </div></div>
+  <div class="bar">
+    <a class="logo" href="/"><img src="/images/kappa-air-logo.png" alt="Kappa-Air LLC, Air Conditioning and Heating" width="213" height="178"></a>
+    <a class="call" href="tel:${SITE.tel}">Call ${SITE.phone}</a>
+  </div>
+  <nav class="main" aria-label="Main"><div class="in">${navHtml}</div></nav>
+</header>
+<main id="main">
+${body}
+</main>
+<footer class="site">
+  <div class="cols">
+    <div>
+      <h3>Kappa-Air, LLC</h3>
+      <p style="margin:0">Family-owned air conditioning and heating service, and a proud home warranty service provider.</p>
+    </div>
+    <div>
+      <h3>Services</h3>
+      <ul>${NAV.slice(0, 6).map(([, label, href]) => `<li><a href="${href}">${label}</a></li>`).join('')}</ul>
+    </div>
+    <div>
+      <h3>Business hours</h3>
+      <p style="margin:0">Monday – Friday<br>7:00 AM – 5:00 PM</p>
+    </div>
+    <div>
+      <h3>Contact</h3>
+      <ul>
+        <li><a href="tel:${SITE.tel}">${SITE.phone}</a></li>
+        <li><a href="mailto:${SITE.email}">${SITE.email}</a></li>
+        <li><a href="${SITE.maps}">${SITE.address.join(', ')}</a></li>
+        <li><a href="${SITE.facebook}">Facebook</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="base">&copy; ${new Date().getFullYear()} Kappa-Air, LLC. All rights reserved.</p>
+</footer>
+</body>
+</html>
+`;
+  return html.replace(/(href|src)="\/(?!\/)/g, `$1="${BASE}`);
+}
+
+// ---------- render ----------
+fs.mkdirSync(OUT, { recursive: true });
+for (const f of fs.readdirSync(OUT)) fs.rmSync(path.join(OUT, f), { recursive: true, force: true });
+const write = (rel, html) => {
+  const file = path.join(OUT, rel);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, html);
+};
+const urls = [];
+for (const p of pages) {
+  const pathname = p.slug === 'home' ? '/' : `/${p.slug}/`;
+  write(pathname === '/' ? 'index.html' : `${p.slug}/index.html`,
+    layout({ title: p.title, description: p.description, pathname, nav: p.nav || p.slug, body: fill(p.body, p.slug) }));
+  urls.push(pathname);
+}
+write('404.html', layout({ title: `Page not found | ${SITE.name}`, description: 'That page is not here.', pathname: '/404', nav: '',
+  body: `<div class="page-head"><div class="measure"><h1>That page isn't here.</h1>
+  <p class="lead">Try the <a href="/">home page</a> or <a href="/home-warranty/">how home warranty service works</a>, or just call ${SITE.phone}.</p></div></div>` }));
+
+const copyDir = (src, dst) => {
+  for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+    const s = path.join(src, e.name), d = path.join(dst, e.name);
+    if (e.isDirectory()) { fs.mkdirSync(d, { recursive: true }); copyDir(s, d); } else fs.copyFileSync(s, d);
+  }
+};
+copyDir(path.join(ROOT, 'static'), OUT);
+
+const today = new Date().toISOString().slice(0, 10);
+write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((u) => `  <url><loc>${SITE.url}${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+</urlset>
+`);
+write('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE.url}/sitemap.xml\n`);
+// Pages drops the custom domain if CNAME ever disappears, so the build owns it.
+if (CONFIG.domain) write('CNAME', CONFIG.domain + '\n');
+write('.nojekyll', '');
+
+console.log(`built ${urls.length} pages + 404 → ${CONFIG.domain ? 'https://' + CONFIG.domain : 'preview at ' + BASE}`);
