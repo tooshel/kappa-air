@@ -19,7 +19,7 @@
   --amber:#f39a2b;--ink:#1d2a3a;--soft:#4f5f72;--line:#dde6ef;color-scheme:light}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-[id]{scroll-margin-top:110px}
+[id]{scroll-margin-top:250px}
 body{margin:0;font:17px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff}
 img{max-width:100%;height:auto}
 a{color:var(--blue);text-underline-offset:.18em}
@@ -75,11 +75,13 @@ section{padding:clamp(36px,6vw,64px) clamp(16px,4vw,40px)}
 .btn-primary:hover{background:#a8360c;color:#fff}
 .btn-ghost{color:var(--blue);border:2px solid currentColor}
 .btn-ghost:hover{color:var(--flame)}
-.hero .btn-ghost,.navy .btn-ghost{color:#fff}
-.hero .btn-ghost:hover,.navy .btn-ghost:hover{color:#ffd2bd}
+.hero .btn-ghost,.navy .btn-ghost,.cta-band .btn-ghost{color:#fff}
+.hero .btn-ghost:hover,.navy .btn-ghost:hover,.cta-band .btn-ghost:hover{color:#ffd2bd}
 
 /* content */
 .prose{max-width:70ch}
+.measure.prose{max-width:1080px}
+.measure.prose>*{max-width:70ch}
 .prose h2{margin-top:2.4rem}.prose h2:first-child{margin-top:0}
 .prose ul{padding-left:1.25rem}.prose li{margin:.35rem 0}
 .two-col{display:grid;grid-template-columns:1fr minmax(240px,320px);gap:clamp(24px,4vw,52px);align-items:start}
@@ -140,6 +142,7 @@ footer.site .base{max-width:1080px;margin:24px auto 0;padding-top:16px;border-to
   .two-col,.split{grid-template-columns:1fr}
   .side-card{position:static}
   .site-head{position:static}
+  [id]{scroll-margin-top:16px}
   .logo img{width:110px}
   .strip .tag{display:none}
   nav.main .in{gap:0 16px}
@@ -153,14 +156,14 @@ footer.site .base{max-width:1080px;margin:24px auto 0;padding-top:16px;border-to
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head">
   <div class="strip"><div class="in">
-    <span class="tag">Home warranty HVAC service across Mesa and the Valley</span>
+    <span class="tag">Home warranty HVAC service across the Phoenix metro area</span>
     <span><a href="mailto:service@kappa-air.com">service@kappa-air.com</a></span>
   </div></div>
   <div class="bar">
     <a class="logo" href="/kappa-air/"><img src="/kappa-air/images/kappa-air-logo.png" alt="Kappa-Air LLC, Air Conditioning and Heating" width="213" height="178"></a>
     <a class="call" href="tel:+14806738311">Call (480) 673-8311</a>
   </div>
-  <nav class="main" aria-label="Main"><div class="in"><a href="/kappa-air/home-warranty/">Home Warranty</a><a href="/kappa-air/ac-repair/">AC Repair</a><a href="/kappa-air/ac-installation/">AC Replacement</a><a href="/kappa-air/air-conditioning-and-heating-maintenance/">Maintenance</a><a href="/kappa-air/heating-repair/">Heating Repair</a><a href="/kappa-air/indoor-air-quality/">Air Quality</a><a href="/kappa-air/service-area/">Service Area</a><a href="/kappa-air/contact-us/" aria-current="page">Contact</a></div></nav>
+  <nav class="main" aria-label="Main"><div class="in"><a href="/kappa-air/home-warranty/">How It Works</a><a href="/kappa-air/home-warranty/#repair">Repairs</a><a href="/kappa-air/home-warranty/#replacement">Replacements</a><a href="/kappa-air/home-warranty/#not-covered">Not Covered?</a><a href="/kappa-air/home-warranty/#maintenance">Maintenance</a><a href="/kappa-air/contact-us/" aria-current="page">Contact</a></div></nav>
 </header>
 <main id="main">
 <div class="page-head">
@@ -210,8 +213,8 @@ footer.site .base{max-width:1080px;margin:24px auto 0;padding-top:16px;border-to
       <p style="margin:0">Family-owned air conditioning and heating service, and a proud home warranty service provider.</p>
     </div>
     <div>
-      <h3>Services</h3>
-      <ul><li><a href="/kappa-air/home-warranty/">Home Warranty</a></li><li><a href="/kappa-air/ac-repair/">AC Repair</a></li><li><a href="/kappa-air/ac-installation/">AC Replacement</a></li><li><a href="/kappa-air/air-conditioning-and-heating-maintenance/">Maintenance</a></li><li><a href="/kappa-air/heating-repair/">Heating Repair</a></li><li><a href="/kappa-air/indoor-air-quality/">Air Quality</a></li></ul>
+      <h3>Home warranty service</h3>
+      <ul><li><a href="/kappa-air/home-warranty/">How It Works</a></li><li><a href="/kappa-air/home-warranty/#repair">Repairs</a></li><li><a href="/kappa-air/home-warranty/#replacement">Replacements</a></li><li><a href="/kappa-air/home-warranty/#not-covered">Not Covered?</a></li><li><a href="/kappa-air/home-warranty/#maintenance">Maintenance</a></li></ul>
     </div>
     <div>
       <h3>Business hours</h3>

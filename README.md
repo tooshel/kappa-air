@@ -9,6 +9,16 @@ claim works. There is no DIY section and no pricing: the warranty company sets c
 
 ## Editing
 
+Three pages: home, `/home-warranty/` (how warranty service works, repairs, replacements, what isn't covered,
+maintenance), and contact. The old WordPress addresses (`/ac-repair/`, `/heating-repair/`, `/ac-installation/`,
+`/air-conditioning-and-heating-maintenance/`, `/indoor-air-quality/`, `/service-area/`) forward to the matching
+section; the list is `REDIRECTS` in `tools/build.js`.
+
+The warranty-process wording follows the published contracts (American Home Shield's Arizona contract, Old
+Republic's Arizona plan, First American, 2-10): the warranty company picks the contractor, decides repair vs.
+replace, and must approve work in advance; homeowners commonly pay for permits, code upgrades, modifications,
+cranes, extra refrigerant, haul-away, and excluded items. Keep claims general ("depending on your plan").
+
 - Pages: `content/pages/*.html` (front matter: `title`, `description`, `nav`)
 - Header, nav, footer, styles, phone/email/address, city list: `tools/build.js` (the `SITE` object at the top)
 - Logo and favicon: `static/`

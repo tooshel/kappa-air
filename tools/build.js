@@ -29,15 +29,22 @@ const SITE = {
 const BASE = CONFIG.domain ? '/' : CONFIG.previewBase;
 
 const NAV = [
-  ['home-warranty', 'Home Warranty', '/home-warranty/'],
-  ['ac-repair', 'AC Repair', '/ac-repair/'],
-  ['ac-installation', 'AC Replacement', '/ac-installation/'],
-  ['maintenance', 'Maintenance', '/air-conditioning-and-heating-maintenance/'],
-  ['heating-repair', 'Heating Repair', '/heating-repair/'],
-  ['indoor-air-quality', 'Air Quality', '/indoor-air-quality/'],
-  ['service-area', 'Service Area', '/service-area/'],
+  ['home-warranty', 'How It Works', '/home-warranty/'],
+  ['repair', 'Repairs', '/home-warranty/#repair'],
+  ['replacement', 'Replacements', '/home-warranty/#replacement'],
+  ['not-covered', 'Not Covered?', '/home-warranty/#not-covered'],
+  ['maintenance', 'Maintenance', '/home-warranty/#maintenance'],
   ['contact-us', 'Contact', '/contact-us/'],
 ];
+// Pages from the old WordPress site, forwarded so old links and search results still land somewhere useful.
+const REDIRECTS = {
+  'ac-repair': '/home-warranty/#repair',
+  'heating-repair': '/home-warranty/#repair',
+  'ac-installation': '/home-warranty/#replacement',
+  'air-conditioning-and-heating-maintenance': '/home-warranty/#maintenance',
+  'indoor-air-quality': '/',
+  'service-area': '/#contact',
+};
 
 // ---------- content ----------
 function load(file) {
@@ -61,7 +68,7 @@ const STYLE = `
   --amber:#f39a2b;--ink:#1d2a3a;--soft:#4f5f72;--line:#dde6ef;color-scheme:light}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-[id]{scroll-margin-top:110px}
+[id]{scroll-margin-top:250px}
 body{margin:0;font:17px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff}
 img{max-width:100%;height:auto}
 a{color:var(--blue);text-underline-offset:.18em}
@@ -117,11 +124,13 @@ section{padding:clamp(36px,6vw,64px) clamp(16px,4vw,40px)}
 .btn-primary:hover{background:#a8360c;color:#fff}
 .btn-ghost{color:var(--blue);border:2px solid currentColor}
 .btn-ghost:hover{color:var(--flame)}
-.hero .btn-ghost,.navy .btn-ghost{color:#fff}
-.hero .btn-ghost:hover,.navy .btn-ghost:hover{color:#ffd2bd}
+.hero .btn-ghost,.navy .btn-ghost,.cta-band .btn-ghost{color:#fff}
+.hero .btn-ghost:hover,.navy .btn-ghost:hover,.cta-band .btn-ghost:hover{color:#ffd2bd}
 
 /* content */
 .prose{max-width:70ch}
+.measure.prose{max-width:1080px}
+.measure.prose>*{max-width:70ch}
 .prose h2{margin-top:2.4rem}.prose h2:first-child{margin-top:0}
 .prose ul{padding-left:1.25rem}.prose li{margin:.35rem 0}
 .two-col{display:grid;grid-template-columns:1fr minmax(240px,320px);gap:clamp(24px,4vw,52px);align-items:start}
@@ -182,6 +191,7 @@ footer.site .base{max-width:1080px;margin:24px auto 0;padding-top:16px;border-to
   .two-col,.split{grid-template-columns:1fr}
   .side-card{position:static}
   .site-head{position:static}
+  [id]{scroll-margin-top:16px}
   .logo img{width:110px}
   .strip .tag{display:none}
   nav.main .in{gap:0 16px}
@@ -254,7 +264,7 @@ ${CONFIG.domain ? '' : '<meta name="robots" content="noindex">'}
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head">
   <div class="strip"><div class="in">
-    <span class="tag">Home warranty HVAC service across Mesa and the Valley</span>
+    <span class="tag">Home warranty HVAC service across the Phoenix metro area</span>
     <span><a href="mailto:${SITE.email}">${SITE.email}</a></span>
   </div></div>
   <div class="bar">
@@ -273,8 +283,8 @@ ${body}
       <p style="margin:0">Family-owned air conditioning and heating service, and a proud home warranty service provider.</p>
     </div>
     <div>
-      <h3>Services</h3>
-      <ul>${NAV.slice(0, 6).map(([, label, href]) => `<li><a href="${href}">${label}</a></li>`).join('')}</ul>
+      <h3>Home warranty service</h3>
+      <ul>${NAV.slice(0, 5).map(([, label, href]) => `<li><a href="${href}">${label}</a></li>`).join('')}</ul>
     </div>
     <div>
       <h3>Business hours</h3>
@@ -313,6 +323,13 @@ for (const p of pages) {
     layout({ title: p.title, description: p.description, pathname, nav: p.nav || p.slug, body: fill(p.body, p.slug) }));
   urls.push(pathname);
 }
+const redirect = (to) => `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Moved | ${SITE.name}</title>
+<link rel="canonical" href="${SITE.url}${to.split('#')[0]}">
+<meta http-equiv="refresh" content="0; url=${to}"></head>
+<body><p>This page has moved: <a href="${to}">${SITE.url}${to}</a></p></body></html>
+`.replace(/(href|url)=("?)\/(?!\/)/g, `$1=$2${BASE}`);
+for (const [from, to] of Object.entries(REDIRECTS)) write(`${from}/index.html`, redirect(to));
 write('404.html', layout({ title: `Page not found | ${SITE.name}`, description: 'That page is not here.', pathname: '/404', nav: '',
   body: `<div class="page-head"><div class="measure"><h1>That page isn't here.</h1>
   <p class="lead">Try the <a href="/">home page</a> or <a href="/home-warranty/">how home warranty service works</a>, or just call ${SITE.phone}.</p></div></div>` }));
