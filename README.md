@@ -30,6 +30,13 @@ Then run `node tools/build.js`, commit, and push. Never edit `docs/` by hand.
 While `site.config.json` has `"domain": ""`, the build targets the preview at https://tooshel.github.io/kappa-air/
 (links get the `/kappa-air/` prefix, pages carry `noindex`, and there is no CNAME).
 
+## Old site archive
+
+`static/archive/wordpress/` is a saved copy of the old WordPress site (all 8 pages, images, and styles), captured
+with wget on 2026-10-30 just before the switch, and served at `/archive/wordpress/`. It is for reference only:
+every page carries `noindex` and a banner pointing to the current site, robots.txt disallows `/archive/`, the
+Zendesk chat widget was removed, and its contact forms can't submit. Leave it out of the nav and sitemap.
+
 ## Going live (when you're happy with the preview)
 
 DNS for kappa-air.com is at GoDaddy (ns69/ns70.domaincontrol.com). Email is Google Workspace: **leave the MX

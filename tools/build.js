@@ -348,7 +348,8 @@ write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 ${urls.map((u) => `  <url><loc>${SITE.url}${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
 </urlset>
 `);
-write('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE.url}/sitemap.xml\n`);
+// /archive/ is the saved copy of the old WordPress site: kept for reference, never indexed
+write('robots.txt', `User-agent: *\nAllow: /\nDisallow: /archive/\nSitemap: ${SITE.url}/sitemap.xml\n`);
 // Pages drops the custom domain if CNAME ever disappears, so the build owns it.
 if (CONFIG.domain) write('CNAME', CONFIG.domain + '\n');
 write('.nojekyll', '');
